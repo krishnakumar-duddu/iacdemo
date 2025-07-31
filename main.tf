@@ -1,47 +1,39 @@
-# Root Directory 
-
-#   To use the resources defined in child modules within our root module, 
-#   add parent modules that reference those child modules.
-
-module "vpc" {             # Parent module
-  source = "./modules/vpc" # Relative path to Child module
-
-  # Assign input variables
-  name                       = "two_tier"
-  region                     = "us-east-1"
-  cidr_block                 = "10.0.0.0/16"
-  public_subnet_cidr_blocks  = ["10.0.1.0/24", "10.0.2.0/24"]
-  private_subnet_cidr_blocks = ["10.0.3.0/24", "10.0.4.0/24"]
-  availability_zones         = ["us-east-1a", "us-east-1b"]
+# Configure the AWS Provider
+provider "aws" {
+  region = "us-east-1" # Specify your desired AWS region
 }
 
-#   Launch an EC2 Instance with Apache webserver in each 
-#   public web tier subnet
+# Define the S3 Bucket resource
+resource "aws_s3_bucket" "my_example_bucket" {
+  bucket = "my-unique-s3-bucket-name-12345" # Replace with a globally unique bucket name
 
-module "web_server" {
-  source = "./modules/ec2_instance"
-
-  ami_id             = "ami-03c7d01cf4dedc891"
-  instance_type      = "t2.micro"
-  key_name           = "projectkeypair"
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  security_group_ids = [aws_security_group.ec2_sg.id]
-  user_data          = file("apache.sh")
+  tags = {
+    Environment = "Development"
+    Project     = "Terraform-S3-Demo"
+  }
 }
 
-# Launch an RDS MySQL Instance in the private RDS subnets
+# Optional: Enable bucket versioning
+resource "aws_s3_bucket_versioning" "my_example_bucket_versioning" {
+  bucket = aws_s3_bucket.my_example_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
-module "mysql_db" {
-  source = "./modules/rds_instance"
+# Optional: Add a bucket policy for public read access (use with caution)
+resource "aws_s3_bucket_policy" "my_example_bucket_policy" {
+  bucket = aws_s3_bucket.my_example_bucket.id
 
-  db_name             = "twotier"
-  allocated_storage   = 10
-  instance_class      = "db.t2.micro"
-  engine              = "mysql"
-  engine_version      = "8.0"
-  rds_username        = var.db_username
-  rds_password        = var.db_password
-  security_group_ids  = [aws_security_group.rds_sg.id]
-  private_subnet_ids  = module.vpc.private_subnet_ids
-  skip_final_snapshot = true
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = ["s3:GetObject"],
+        Resource  = ["${aws_s3_bucket.my_example_bucket.arn}/*"]
+      }
+    ]
+  })
 }
