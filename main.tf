@@ -43,13 +43,11 @@ data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnet" "default" {
+data "aws_subnets" "default" {
   filter {
-    name   = "publicsubnet"
-    values = ["true"]
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
   }
-
-  availability_zone = data.aws_availability_zones.available.names[0]
 }
 
 data "aws_availability_zones" "available" {}
