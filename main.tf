@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "web" {
-  ami           = "ami-0c02fb55956c7d316" # Amazon Linux 2 in us-east-1
+  ami           = "ami-0bd143bcbc97ff02d" # Amazon Linux 2 in us-east-1
   instance_type = "t2.micro"
   key_name      = "foriacdemo"               # Change to your existing key pair name
 
