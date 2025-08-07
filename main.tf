@@ -11,7 +11,7 @@ resource "aws_instance" "web" {
 
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
 
-  subnet_id = data.aws_subnet.default.id
+ subnet_id = data.aws_subnets.default.ids[0]
 
   tags = {
     Name = "Public-EC2"
